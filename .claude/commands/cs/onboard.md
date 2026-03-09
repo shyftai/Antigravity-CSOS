@@ -78,15 +78,33 @@ Workspace name: $ARGUMENTS
    - If Slack MCP detected -- "Want alerts for at-risk customers, renewals due, escalations, and NPS detractors in Slack?"
    - If not detected -- skip
 
+## Registration (optional)
+10. Ask: "Would you like to register this workspace for updates, tips, and priority support? (just your email and company name)"
+   - If yes: collect email and company name, then POST to the registration endpoint:
+     ```
+     POST https://hooks.shyftai.com/register
+     {
+       "os": "csos",
+       "version": "1.0.0",
+       "company": "{company_name}",
+       "email": "{email}",
+       "workspace": "$ARGUMENTS",
+       "timestamp": "{ISO 8601}"
+     }
+     ```
+     Show: `Registered — you'll get updates at {email}`
+   - If no: skip gracefully. Show: `Skipped — you can register anytime with /cs:feedback`
+   - This step never blocks onboarding. If the POST fails, ignore silently and continue.
+
 ## Block 1 -- Product and customer success definition
-10. Ask: "What product/service do your customers use? What does success look like for them?"
+11. Ask: "What product/service do your customers use? What does success look like for them?"
     - Product name, type, and core value proposition
     - What outcome means a customer is "successful"
     - Key activation events (what makes a customer sticky)
     Save to workspace.config.md
 
 ## Block 2 -- Customer segments
-11. Ask: "How are your customers segmented?"
+12. Ask: "How are your customers segmented?"
     - Segment tiers: Enterprise, Mid-Market, SMB, or custom tiers
     - ARR ranges per segment
     - Customer count per segment
@@ -94,13 +112,13 @@ Workspace name: $ARGUMENTS
     Save to SEGMENTS.md
 
 ## Block 3 -- Current customer roster
-12. Ask: "Tell me about your current customers"
+13. Ask: "Tell me about your current customers"
     - Top 10-20 customers with: name, segment, ARR, renewal date, health (gut feel), CSM owner
     - Or import from CSV/CRM if available
     Save to CUSTOMERS.md
 
 ## Block 4 -- Health scoring model
-13. Ask: "What are your key health indicators?"
+14. Ask: "What are your key health indicators?"
     - Product usage (login frequency, feature adoption, DAU/MAU)
     - Engagement (meeting attendance, email responsiveness, champion activity)
     - Support (ticket volume, severity, resolution satisfaction)
@@ -110,7 +128,7 @@ Workspace name: $ARGUMENTS
     Save to HEALTH-SCORES.md
 
 ## Block 5 -- Onboarding process
-14. Ask: "What does your onboarding process look like today?"
+15. Ask: "What does your onboarding process look like today?"
     - Standard onboarding milestones and timeline
     - Time-to-value target (days from signed contract to first value)
     - Training requirements and completion criteria
@@ -119,7 +137,7 @@ Workspace name: $ARGUMENTS
     Save to ONBOARDING.md
 
 ## Block 6 -- Playbooks
-15. Ask: "What playbooks do you run today?"
+16. Ask: "What playbooks do you run today?"
     - Onboarding playbook (steps, timeline, success criteria)
     - At-risk/save playbook (triggers, interventions, escalation path)
     - Expansion playbook (signals, qualification, approach)
@@ -129,7 +147,7 @@ Workspace name: $ARGUMENTS
     Save to PLAYBOOKS.md
 
 ## Block 7 -- Tools and integrations
-16. Ask: "What tools do you use for customer success?"
+17. Ask: "What tools do you use for customer success?"
     - CRM (HubSpot, Salesforce, Attio)
     - CS platform (Gainsight, Vitally, ChurnZero, Totango)
     - Support (Zendesk, Intercom, Freshdesk)
@@ -139,7 +157,7 @@ Workspace name: $ARGUMENTS
     Save to workspace.config.md tools section
 
 ## Block 8 -- Metrics and targets
-17. Ask: "What are your CS KPIs and targets?"
+18. Ask: "What are your CS KPIs and targets?"
     - GRR (Gross Revenue Retention) target
     - NRR (Net Revenue Retention) target
     - NPS target
@@ -150,7 +168,7 @@ Workspace name: $ARGUMENTS
     Save to METRICS.md
 
 ## Block 9 -- Churn and risk
-18. Ask: "What are the most common reasons customers churn?"
+19. Ask: "What are the most common reasons customers churn?"
     - Top churn reasons (rank ordered)
     - Known churn signals (what precedes churn)
     - Current save rate (% of at-risk customers retained)
@@ -158,14 +176,14 @@ Workspace name: $ARGUMENTS
     Save to PLAYBOOKS.md churn section
 
 ## Finalize
-19. For any field the user skips or doesn't know yet, use defaults from defaults.md
-20. Write all answers into respective files
-21. Check .env for required API keys and MCP servers
-22. If team mode: run initial sync to Supabase
-23. Display workspace header with loaded context
+20. For any field the user skips or doesn't know yet, use defaults from defaults.md
+21. Write all answers into respective files
+22. Check .env for required API keys and MCP servers
+23. If team mode: run initial sync to Supabase
+24. Display workspace header with loaded context
 
 ## Role-based next steps
-24. Suggest next actions based on role:
+25. Suggest next actions based on role:
 
 **CSM:**
 - `/cs:today $ARGUMENTS` -- see what needs attention today
