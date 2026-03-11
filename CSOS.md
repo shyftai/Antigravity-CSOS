@@ -203,16 +203,78 @@ CS:OS supports two execution modes, configured per workspace in `workspace.confi
 - Skips approval gates for health checks, timeline entries, internal notes, and segment updates
 - Still shows results inline so you can review, but does not pause
 - Only stops for **hard gates** (non-skippable):
-  1. **Contract changes** — renewals, downgrades, cancellations always require explicit approval
-  2. **Customer-facing communications** — QBR decks, formal reports, executive summaries always require explicit approval
-  3. **Escalations to leadership** — executive escalations always require explicit approval
-  4. **Pricing/discount approvals** — any pricing changes or discount offers always require explicit approval
-  5. **Account reassignment** — transferring account ownership always requires explicit approval
+
+  **Outbound (customer sees it — irreversible):**
+  - Customer-facing communications — QBR decks, formal reports, executive summaries
+  - Escalations to leadership — executive escalations
+  - Renewal/cancellation conversations — any outbound about contract status
+  - NPS survey sends — triggering surveys to customers
+
+  **Data integrity (corrupts your customer records):**
+  - Contract changes — renewals, downgrades, cancellations
+  - Pricing/discount approvals — any pricing changes or discount offers
+  - Account reassignment — transferring account ownership
+  - SLA changes — modifying service level agreements
+  - Customer data exports — bulk export of customer information
+  - Health score manual overrides — overriding calculated health scores
+
+  **Infrastructure (breaks CS operations):**
+  - Feature access/provisioning changes — enabling or disabling customer features
+  - Integration config changes — connecting or disconnecting CS tools
+  - API key or credential changes — rotating, updating, or exposing keys
+  - Webhook creation/deletion — webhooks push data to external systems
+  - Automated email trigger changes — modifying automated customer touchpoints
+
+  **Financial / compliance:**
+  - Budget overages — tool spend exceeds workspace budget
+  - Compliance violations — data privacy, contractual obligations
+  - Tool credit checks marked `confirm-before-every-use`
 
 **How it works in commands:**
 - Commands that show `>> Approve / Edit / Reject` gates: in auto mode, auto-approve and continue. Log the auto-approval in `logs/decisions.md`.
 - Commands that ask clarifying questions: in auto mode, use sensible defaults from `defaults.md` and proceed. Log what was assumed.
 - Multi-step workflows (assess → plan → execute): in auto mode, chain automatically. Stop only at hard gates.
+
+### Audit log
+
+Every action in auto mode — not just gate decisions — gets logged to `logs/auto-audit.md`. This is the "black box" that lets you trace what happened if something goes wrong.
+
+**Log every auto-mode action with:**
+```
+## [ISO timestamp]
+- **Action:** what was done (e.g. "Pulled health scores for 34 accounts")
+- **Tool:** which tool/API was called
+- **Input:** key parameters (endpoint, record count, query)
+- **Output:** result summary (records returned, status, errors)
+- **Cost:** credits/units consumed
+- **Files changed:** which files were created or modified
+- **Auto-approved gate?** yes/no — if yes, what gate was skipped
+```
+
+Keep this log append-only. Never truncate or overwrite. Rotate monthly to `logs/auto-audit-YYYY-MM.md`.
+
+### Circuit breakers
+
+Auto mode must enforce these limits per session. If any limit is hit, stop and ask.
+
+| Breaker | Threshold | What happens |
+|---------|-----------|--------------|
+| API calls per session | 500 | Stop, show count by tool, ask to continue |
+| Credits spent per session | 80% of workspace budget | Stop, show spend summary |
+| Account records modified per batch | 200 | Stop, confirm before processing rest |
+| Consecutive errors | 3 | Stop, diagnose before retrying |
+| File overwrites in single session | 10 | Stop, show list of files changed |
+| Cross-workspace writes | 1 (any) | Hard stop — never auto-approve writing outside active workspace |
+| Customer-facing emails drafted per session | 20 | Stop — bulk comms must be intentional |
+
+If a circuit breaker fires, log it in `logs/auto-audit.md` with full context and switch to interactive mode for the remainder of that workflow.
+
+### Rollback safety
+
+Before any multi-step auto-mode chain (assess → plan → execute), create a git checkpoint:
+- `git add -A && git commit -m "AUTO checkpoint: before [workflow name]"`
+- If the chain fails or a circuit breaker fires, the user can `git revert` to the checkpoint
+- Log the checkpoint commit hash in `logs/auto-audit.md`
 
 **Toggling:**
 - Set during onboarding, or change anytime in `workspace.config.md`
