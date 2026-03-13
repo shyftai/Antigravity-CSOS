@@ -24,3 +24,6 @@ workspaces/
 
 # Planning artifacts
 .planning/
+
+# Logs
+logs/
